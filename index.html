@@ -22,10 +22,11 @@
 
     <script>
         async function fetchData() {
+            const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
             const targetUrl = 'https://velara.cc/';
 
             try {
-                const response = await fetch(targetUrl, {
+                const response = await fetch(proxyUrl + targetUrl, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'text/html',
