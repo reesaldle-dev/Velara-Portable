@@ -3,46 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Velara Proxy</title>
-    <style>
-        body { font-family: Arial, sans-serif; background-color: #121212; color: #e0e0e0; text-align: center; padding: 50px; }
-        #content { max-width: 600px; margin: 0 auto; background: #1e1e1e; padding: 20px; border-radius: 8px; }
-        button { padding: 10px 20px; background: #6200ee; color: #ffffff; border: none; border-radius: 5px; cursor: pointer; }
-        button:hover { background: #3700b3; }
-        #output { margin-top: 20px; white-space: pre-wrap; text-align: left; }
-    </style>
-</head>
-<body>
-    <h1>Velara Proxy</h1>
-    <div id="content">
-        <p>Click the button below to fetch data from Velara:</p>
-        <button onclick="fetchData()">Fetch Data</button>
-        <div id="output"></div>
-    </div>
-
+    <title>Website</title>
     <script>
-        async function fetchData() {
-            const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+        async function handleRequest(request) {
             const targetUrl = 'https://velara.cc/';
 
-            try {
-                const response = await fetch(proxyUrl + targetUrl, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'text/html',
-                    }
-                });
+            const url = new URL(request.url);
+            url.hostname = new URL(targetUrl).hostname;
 
-                if (!response.ok) {
-                    throw new Error(`Error: ${response.status}`);
-                }
+            const modifiedRequest = new Request(url.toString(), request);
 
-                const data = await response.text();
-                document.getElementById('output').textContent = data;
-            } catch (error) {
-                document.getElementById('output').textContent = `Error: ${error.message}`;
-            }
+            return await fetch(modifiedRequest);
         }
+
+        addEventListener("fetch", event => {
+            event.respondWith(handleRequest(event.request));
+        });
     </script>
+</head>
+<body>
+
 </body>
 </html>
