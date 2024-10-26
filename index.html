@@ -3,25 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Website</title>
+    <title>Proxy</title>
+</head>
+<body>
     <script>
         async function handleRequest(request) {
             const targetUrl = 'https://velara.cc/';
+            
+            // Add CORS headers
+            const corsHeaders = {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET, HEAD, POST, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type',
+            };
 
-            const url = new URL(request.url);
-            url.hostname = new URL(targetUrl).hostname;
+            // Handle CORS preflight
+            if (request.method === 'OPTIONS') {
+                return new Response(null, {
+                    headers: corsHeaders
+                });
+            }
 
-            const modifiedRequest = new Request(url.toString(), request);
+            try {
+                const response = await fetch(targetUrl, {
+                    method: request.method,
+                    headers: {
+                        'User-Agent': request.headers.get('User-Agent'),
+                        'Accept': request.headers.get('Accept') || '*/*',
+                        'Accept-Language': request.headers.get('Accept-Language'),
+                        'X-Forwarded-For': request.headers.get('X-Forwarded-For'),
+                        'X-Real-IP': request.headers.get('X-Real-IP')
+                    },
+                    body: request.method !== 'GET' ? await request.blob() : undefined
+                });
 
-            return await fetch(modifiedRequest);
+                // Clone the response and modify headers
+                const modifiedResponse = new Response(response.body, response);
+                
+                // Add CORS headers to the response
+                Object.keys(corsHeaders).forEach(key => {
+                    modifiedResponse.headers.set(key, corsHeaders[key]);
+                });
+
+                return modifiedResponse;
+
+            } catch (err) {
+                return new Response(`Error: ${err.message}`, { status: 500 });
+            }
         }
 
-        addEventListener("fetch", event => {
+        // Service Worker registration
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').then(registration => {
+                console.log('ServiceWorker registration successful');
+            }).catch(err => {
+                console.log('ServiceWorker registration failed: ', err);
+            });
+        }
+
+        // Add fetch event listener
+        self.addEventListener('fetch', event => {
             event.respondWith(handleRequest(event.request));
         });
     </script>
-</head>
-<body>
-
 </body>
 </html>
